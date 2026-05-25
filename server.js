@@ -51,13 +51,12 @@ app.post('/api/upload', upload.single('pdfFile'), async (req, res) => {
         }
 
         // Real MongoDB Cloud document parameters
-        // Live IP clickable URL
         // Student ke laptop/phone me offline file download karwane ke liye live path
         const newNote = new Note({
             title: req.body.title || 'Untitled Document',
             fileName: req.file.filename,
-            filePath: `http://127.0.0.1:5000/uploads/${req.file.filename}` // 🎯 Localhost ki jagah 127.0.0.1 kiya
-        });
+            filePath: `https://gurukul-academy-p4yx.onrender.com/uploads/${req.file.filename}`
+        }); // 🎯 UPDATED: Bracket safely closed here!
 
         await newNote.save(); // Saved permanently to Cloud Database
         res.json({ success: true, file: newNote });

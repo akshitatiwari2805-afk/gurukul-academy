@@ -12,8 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Endpoints routes
 /    // Localhost hata kar exact IP address daal rahe hain network lock todne ke liye
-    const UPLOAD_URL = 'http://127.0.0.1:5000/api/upload';
-    const FETCH_URL = 'http://127.0.0.1:5000/api/fetch';
+    const UPLOAD_URL = 'https://gurukul-academy-p4yx.onrender.com/api/upload';
+    const FETCH_URL = 'https://gurukul-academy-p4yx.onrender.com/api/fetch';
     // === SEQUENTIAL STEP 1: AUTO DISMISS SPLASH LOADER ===
     function stopSplashScreen() {
         if (splashScreen) {

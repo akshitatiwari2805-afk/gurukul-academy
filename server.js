@@ -69,9 +69,8 @@ app.get('/api/fetch', async (req, res) => {
 });
 
 // MongoDB connection string
-mongoose.connect('mongodb+srv://akshitatiwari2805:akshi123@cluster0.p4yx.mongodb.net/gurukul?retryWrites=true&w=majority') 
+mongoose.connect('mongodb+srv://akshitatiwari2805:akshi123@cluster0.p4yx.mongodb.net/gurukul?retryWrites=true&w=majority')
   .then(() => console.log('MongoDB Connected & Cloudinary Linked Permanent!'))
   .catch(err => console.error(err));
-
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Server live on port ${PORT}`));

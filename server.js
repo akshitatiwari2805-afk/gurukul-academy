@@ -1,100 +1,77 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const multer = require('multer');
-const path = require('path');
 const cors = require('cors');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const multer = require('multer');
 
 const app = express();
-
-// Middleware Configuration
 app.use(cors());
 app.use(express.json());
 
-// Upload Local Directory Setup
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
-}
-
-// ==========================================
-// 🗄️ MONGODB SCHEMA & MODEL CONFIGURATION
-// ==========================================
-const NoteSchema = new mongoose.Schema({
-    title: { type: String, required: true },
-    fileName: { type: String, required: true },
-    filePath: { type: String, required: true },
-    uploadedAt: { type: Date, default: Date.now }
+// 1. Cloudinary Setup (Aapki photo ke details)
+cloudinary.config({
+  cloud_name: 'dki9p3gi6', 
+  api_key: '934349118624737', 
+  api_secret: 'GMREtveY64pWS7qXSs0oDt8X4Ns' // 👈 Yahan apna copy kiya hua secret paste kijiye!
 });
 
-const Note = mongoose.models.Note || mongoose.model('Note', NoteSchema);
-
-// Multer Disk Storage Engine for PDF Files
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
+// 2. Cloud Storage Configuration for Lifetime Saving
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'gurukul_notes', // Cloudinary par ye folder automatic ban jayega
+    resource_type: 'auto',   // PDF, Images, Word Docs sab upload ho jayega
+    public_id: (req, file) => Date.now() + '-' + file.originalname.split('.')[0],
+  },
 });
 
 const upload = multer({ storage: storage });
 
-// ==========================================
-// 📤 API ROUTE: UPLOAD FILE TO MONGO DB
-// ==========================================
-app.post('/api/upload', upload.single('pdfFile'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ success: false, message: 'Koi file select nahi ki gayi!' });
-        }
+// 3. Database Schema
+const fileSchema = new mongoose.Schema({
+  name: String,
+  url: String,
+  createdAt: { type: Date, default: Date.now }
+});
+const File = mongoose.model('File', fileSchema);
 
-        // Real MongoDB Cloud document parameters
-        // Student ke laptop/phone me offline file download karwane ke liye live path
-        const newNote = new Note({
-            title: req.body.title || 'Untitled Document',
-            fileName: req.file.filename,
-            filePath: `https://gurukul-academy-p4yx.onrender.com/uploads/${req.file.filename}`
-        }); // 🎯 UPDATED: Bracket safely closed here!
-
-        await newNote.save(); // Saved permanently to Cloud Database
-        res.json({ success: true, file: newNote });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server upload error!', error: error.message });
+// 4. Routes
+// Upload Route
+app.post('/api/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
+    
+    // Cloudinary ka permanent link MongoDB database me save hoga
+    const newFile = new File({
+      name: req.file.originalname,
+      url: req.file.path // Cloudinary Link
+    });
+    
+    await newFile.save();
+    res.json({ success: true, file: newFile });
+  } catch (error) {
+    console.error('Upload Error:', error);
+    res.status(500).json({ success: false, message: 'Server upload error' });
+  }
 });
 
-// ==========================================
-// 📥 API ROUTE: FETCH ALL FILES FROM CLOUD
-// ==========================================
+// Fetch Route
 app.get('/api/fetch', async (req, res) => {
-    try {
-        // Fetch logs directly from Atlas Cluster (Latest entries on top)
-        const allFiles = await Note.find().sort({ uploadedAt: -1 });
-        res.json(allFiles);
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Database query failed!', error: error.message });
-    }
+  try {
+    const files = await File.find().sort({ createdAt: -1 });
+    res.json({ success: true, data: files });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server fetch error' });
+  }
 });
 
-// Serve uploads folder as live static assets directory
-app.use('/uploads', express.static(uploadDir));
+// MongoDB connection string
+mongoose.connect('mongodb+srv://akshitatiwari2805:akshi123@cluster0.p4yx.mongodb.net/gurukul?retryWrites=true&w=majority') 
+  .then(() => console.log('MongoDB Connected & Cloudinary Linked Permanent!'))
+  .catch(err => console.error(err));
 
-// ==========================================
-// 📡 SERVER STARTUP ENGINE CONTROL
-// ==========================================
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`\n🚀 GURUKUL BACKEND IS COMPLETELY ACTIVE!`);
-    console.log(`📡 Listening smoothly at: http://localhost:${PORT}`);
-});
-
-// MongoDB Atlas Cloud String
-mongoose.connect('mongodb+srv://akshitatiwari2805_db_user:akshitatiwari%40mango@cluster0.jblqvkw.mongodb.net/gurukul_db?retryWrites=true&w=majority')
-  .then(() => {
-    console.log('🎉 Gurukul Database Connected Successfully to MongoDB Atlas Cloud!\n');
-  })
-  .catch((err) => {
-    console.log('❌ Database connection me error aaya bhai:', err);
-  });
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`Server live on port ${PORT}`));

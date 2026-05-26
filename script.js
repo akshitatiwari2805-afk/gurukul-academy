@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedSubject = '';
 
     // Endpoints routes   
-    const UPLOAD_URL = 'https://gurukul-academy-backend.onrender.com/api/upload';
-const FETCH_URL = 'https://gurukul-academy-backend.onrender.com/api/fetch';
+    const UPLOAD_URL = 'https://gurukul-academy-3hfv.vercel.app/api/upload';
+const FETCH_URL = 'https://gurukul-academy-3hfv.vercel.app/api/fetch';
     // === SEQUENTIAL STEP 1: AUTO DISMISS SPLASH LOADER ===
     function stopSplashScreen() {
         if (splashScreen) {

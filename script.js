@@ -133,4 +133,6 @@ const FETCH_URL = 'https://gurukul-academy-backend.onrender.com/api/fetch';
             alert('❌ Network pipe failure. Verify Express engine server state inside terminal logs.');
         }
     };
+    // Global window pipeline exposure
+    window.executeLocalUploadSimulation = executeLocalUploadSimulation;
 });

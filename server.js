@@ -69,14 +69,13 @@ app.get('/api/fetch', async (req, res) => {
 });
 
 // MongoDB connection string
-mongoose.connect('mongodb+srv://akshitatiwari2805:akshi123@cluster0.p4yx.mongodb.net/gurukul?retryWrites=true&w=majority')
+mongoose.connect('mongodb://akshitatiwari2805:akshi123@cluster0-shard-00-00.p4yx.mongodb.net:27017,cluster0-shard-00-01.p4yx.mongodb.net:27017,cluster0-shard-00-02.p4yx.mongodb.net:27017/gurukul?ssl=true&replicaSet=atlas-kv8m3f-shard-0&authSource=admin&retryWrites=true&w=majority')
   .then(() => {
     console.log('MongoDB Connected & Cloudinary Linked Permanent!');
   })
   .catch((err) => {
     console.error('MongoDB Connection Error:', err);
   });
-
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Server live on port ${PORT}`);

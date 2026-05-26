@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Endpoints routes   
     const UPLOAD_URL = 'https://gurukul-academy-theta.vercel.app/api/upload';
-const FETCH_URL = 'https://gurukul-academy-theta.vercel.app/api/fetch';
+    const FETCH_URL = 'https://gurukul-academy-theta.vercel.app/api/fetch';
+
     // === SEQUENTIAL STEP 1: AUTO DISMISS SPLASH LOADER ===
     function stopSplashScreen() {
         if (splashScreen) {
@@ -72,21 +73,25 @@ const FETCH_URL = 'https://gurukul-academy-theta.vercel.app/api/fetch';
         
         try {
             const response = await fetch(FETCH_URL);
-            const files = await response.json();
+            const result = await response.json(); // 👈 Response format updated
             
             documentRenderTarget.innerHTML = ''; // Wipe loading feedback text
             
-            if (files && files.length > 0) {
-                files.forEach(file => {
+            // ⚠️ Backend returns { success: true, data: [...] }
+            if (result.success && result.data && result.data.length > 0) {
+                result.data.forEach(file => {
                     const fileItem = document.createElement('div');
                     fileItem.className = 'resource-item';
                     
-                    const downloadPath = file.filePath || '#';
+                    // ⚠️ Properties mapped to database schema (url and title/name)
+                    const downloadPath = file.url || '#';
+                    const displayTitle = file.title || file.name || 'Untitled Document';
+                    const uploadDate = file.createdAt ? new Date(file.createdAt).toLocaleDateString() : 'N/A';
                     
                     fileItem.innerHTML = `
                         <div class="resource-details">
-                            <h5>${file.title}</h5>
-                            <p>Status: <span style="color:#f26e22; font-weight:600;">Available Node</span> | Timeline: ${new Date(file.uploadedAt).toLocaleDateString()}</p>
+                            <h5>${displayTitle}</h5>
+                            <p>Status: <span style="color:#22c55e; font-weight:600;">Cloud Live</span> | Timeline: ${uploadDate}</p>
                         </div>
                         <a href="${downloadPath}" target="_blank" class="portal-btn" style="text-decoration: none; display: inline-block;">📥 Download PDF</a>
                     `;
@@ -102,7 +107,7 @@ const FETCH_URL = 'https://gurukul-academy-theta.vercel.app/api/fetch';
     }
 
     // === SEQUENTIAL STEP 4: TRIGGER REPOSITORY FILE TRANSMISSION UPLOAD ===
-    window.executeLocalUploadSimulation = async function(event) {
+    async function executeLocalUploadSimulation(event) {
         const file = event.target.files[0];
         if (!file) return;
 
@@ -110,8 +115,10 @@ const FETCH_URL = 'https://gurukul-academy-theta.vercel.app/api/fetch';
         const fileCustomTitle = `${selectedVertical}_Class-${selectedClass}_${selectedSubject}_${file.name}`;
         
         const formData = new FormData();
-        formData.append('pdfFile', file);
+        formData.append('file', file); // 👈 ⚠️ Fixed: Changed 'pdfFile' to 'file' to match backend upload.single('file')
         formData.append('title', fileCustomTitle);
+        formData.append('subject', selectedSubject);
+        formData.append('classLevel', selectedClass);
 
         try {
             const response = await fetch(UPLOAD_URL, {
@@ -122,9 +129,9 @@ const FETCH_URL = 'https://gurukul-academy-theta.vercel.app/api/fetch';
             const data = await response.json();
 
             if (data.success) {
-                alert(`🎉 Success! Target node securely written to Cloud Database.\n\nAssigned Title:\n${fileCustomTitle}`);
+                alert(`🎉 Success! Target node securely written to Cloudinary & MongoDB.\n\nAssigned Title:\n${fileCustomTitle}`);
                 loadExistingFilesFromCloud(); // Automatic data refresh engine pipeline execution
-                fileInput.value = ''; // Clean input element state tracker
+                if (fileInput) fileInput.value = ''; // Clean input element state tracker
             } else {
                 alert('❌ Transmission stream interrupted: ' + data.message);
             }
@@ -132,7 +139,8 @@ const FETCH_URL = 'https://gurukul-academy-theta.vercel.app/api/fetch';
             console.error('Transmission error trace:', error);
             alert('❌ Network pipe failure. Verify Express engine server state inside terminal logs.');
         }
-    };
+    }
+    
     // Global window pipeline exposure
     window.executeLocalUploadSimulation = executeLocalUploadSimulation;
 });

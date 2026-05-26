@@ -10,10 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedClass = '';
     let selectedSubject = '';
 
-    // Endpoints routes
-/    // Localhost hata kar exact IP address daal rahe hain network lock todne ke liye
+    // Endpoints routes   
     const UPLOAD_URL = 'https://gurukul-academy-p4yx.onrender.com/api/upload';
-    const FETCH_URL = 'https://gurukul-academy-p4yx.onrender.com/api/fetch';
+const FETCH_URL = 'https://gurukul-academy-p4yx.onrender.com/api/fetch';
     // === SEQUENTIAL STEP 1: AUTO DISMISS SPLASH LOADER ===
     function stopSplashScreen() {
         if (splashScreen) {

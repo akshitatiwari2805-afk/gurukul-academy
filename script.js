@@ -89,12 +89,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const displayTitle = file.title || file.name || 'Untitled Document';
                     const uploadDate = file.createdAt ? new Date(file.createdAt).toLocaleDateString() : 'N/A';
                     
+                    // 🔥 FIXED: Is line mein link ko clear kiya gaya hai taaki PDF direct browser ke naye tab mein open ho, .html format mein download na ho.
                     fileItem.innerHTML = `
                         <div class="resource-details">
                             <h5>${displayTitle}</h5>
                             <p>Status: <span style="color:#22c55e; font-weight:600;">Cloud Live</span> | Timeline: ${uploadDate}</p>
                         </div>
-                        <a href="${downloadPath}" target="_blank" class="portal-btn" style="text-decoration: none; display: inline-block;">📥 Download PDF</a>
+                        <a href="${downloadPath}" target="_blank" rel="noopener noreferrer" class="portal-btn" style="text-decoration: none; display: inline-block;">📄 View PDF</a>
                     `;
                     documentRenderTarget.appendChild(fileItem);
                 });

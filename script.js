@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         documentRenderTarget.innerHTML = '<p style="color: #cbd5e1; font-weight: 500;">Syncing workspace stream pipeline with MongoDB Cloud...</p>';
         
         try {
-            // 👉 FIXED: URL ke saath ab classLevel aur subject query params bhejein ge taaki alag-alag dikhein!
+            // URL ke saath ab classLevel aur subject query params bhejein ge taaki alag-alag dikhein!
             const filterUrl = `${FETCH_URL}?classLevel=${selectedClass}&subject=${selectedSubject}`;
             
             const response = await fetch(filterUrl);
@@ -85,17 +85,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     const fileItem = document.createElement('div');
                     fileItem.className = 'resource-item';
                     
-                    const downloadPath = file.url || '#';
+                    const originalUrl = file.url || '#';
                     const displayTitle = file.title || file.name || 'Untitled Document';
                     const uploadDate = file.createdAt ? new Date(file.createdAt).toLocaleDateString() : 'N/A';
                     
-                    // 🔥 FIXED: Is line mein link ko clear kiya gaya hai taaki PDF direct browser ke naye tab mein open ho, .html format mein download na ho.
+                    // 🎯 🔥 FIXED: Agar database link ke aage .pdf nahi hai, toh hum use manually extension force karenge browser ke liye
+                    const viewPath = originalUrl.toLowerCase().endsWith('.pdf') ? originalUrl : `${originalUrl}.pdf`;
+                    
+                    // download="${displayTitle}.pdf" lagane se browser kachra text dikhane ki jagah proper PDF download/open karega
                     fileItem.innerHTML = `
                         <div class="resource-details">
                             <h5>${displayTitle}</h5>
                             <p>Status: <span style="color:#22c55e; font-weight:600;">Cloud Live</span> | Timeline: ${uploadDate}</p>
                         </div>
-                        <a href="${downloadPath}" target="_blank" rel="noopener noreferrer" class="portal-btn" style="text-decoration: none; display: inline-block;">📄 View PDF</a>
+                        <a href="${viewPath}" download="${displayTitle}.pdf" target="_blank" rel="noopener noreferrer" class="portal-btn" style="text-decoration: none; display: inline-block;">📄 View PDF</a>
                     `;
                     documentRenderTarget.appendChild(fileItem);
                 });
@@ -109,12 +112,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // === SEQUENTIAL STEP 4: TRIGGER REPOSITORY FILE TRANSMISSION UPLOAD ===
-    // === SEQUENTIAL STEP 4: TRIGGER REPOSITORY FILE TRANSMISSION UPLOAD ===
     async function executeLocalUploadSimulation(event) {
         const file = event.target.files[0];
         if (!file) return;
 
-        // 🎯 FIX: Pehle check karenge ki bache ki file name ke peeche .pdf laga hai ya nahi
+        // Pehle check karenge ki bache ki file name ke peeche .pdf laga hai ya nahi
         let rawFileName = file.name;
         if (!rawFileName.toLowerCase().endsWith('.pdf')) {
             rawFileName = rawFileName + '.pdf';
@@ -149,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('❌ Network pipe failure. Verify Express engine server state inside terminal logs.');
         }
     }
+    
     // Global window pipeline exposure
     window.executeLocalUploadSimulation = executeLocalUploadSimulation;
 });

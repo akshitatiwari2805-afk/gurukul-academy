@@ -42,8 +42,12 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'gurukul_notes', 
-    resource_type: 'raw',   // 🔥 FIXED: PDF ko image nahi banayega, loading error hamesha ke liye khatam!
-    public_id: (req, file) => Date.now() + '-' + file.originalname.split('.')[0],
+    resource_type: 'raw',   
+    format: 'pdf', // 🔥 FIXED: Yeh line Cloudinary par file ke peeche automatic .pdf extension jod degi!
+    public_id: (req, file) => {
+      const baseName = file.originalname.split('.')[0];
+      return Date.now() + '-' + baseName;
+    },
   },
 });
 

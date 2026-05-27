@@ -9,10 +9,27 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ⚠️ FIXED: Sahi mongodb+srv connection string bina shard ke jhanjhat ke
-mongoose.connect('mongodb+srv://akshitatiwari2805:akshi123@cluster0.p4yx.mongodb.net/gurukul?retryWrites=true&w=majority')
-  .then(() => console.log('MongoDB Connected & Cloudinary Linked Permanent!'))
-  .catch((err) => console.error('MongoDB Connection Error:', err));
+// ⚡ SERVERLESS DATABASE CONNECTION FUNCTION
+let isConnected = false;
+async function connectToDatabase() {
+  if (isConnected) {
+    console.log('=> Using existing database connection');
+    return;
+  }
+
+  // Vercel ke environment variables ko read karega, agar nahi milenge toh fallback string chalegi
+  const dbUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb+srv://akshitatiwari2805_db_user:akshita28@cluster0.jblqvkw.mongodb.net/gurukul?appName=Cluster0';
+
+  console.log('=> Connecting to database...');
+  try {
+    const db = await mongoose.connect(dbUri);
+    isConnected = db.connections[0].readyState;
+    console.log('MongoDB Connected successfully!');
+  } catch (err) {
+    console.error('MongoDB Connection Error:', err);
+    throw err;
+  }
+}
 
 // 1. Cloudinary Setup
 cloudinary.config({
@@ -42,11 +59,21 @@ const fileSchema = new mongoose.Schema({
   url: String,
   createdAt: { type: Date, default: Date.now }
 });
-const File = mongoose.model('File', fileSchema);
 
-// 4. Routes
+// Vercel serverless optimization for models
+const File = mongoose.models.File || mongoose.model('File', fileSchema);
+
+// 4. Routes with Database Connection Check
+
 // Upload Route
-app.post('/api/upload', upload.single('file'), async (req, res) => {
+app.post('/api/upload', async (req, res, next) => {
+  try {
+    await connectToDatabase(); // Pehle connection check karega
+    next();
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Database connection failed" });
+  }
+}, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
@@ -71,6 +98,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 // Fetch Route
 app.get('/api/fetch', async (req, res) => {
   try {
+    await connectToDatabase(); // Pehle connection check karega
     const files = await File.find().sort({ createdAt: -1 });
     res.json({ success: true, data: files });
   } catch (error) {
@@ -82,6 +110,8 @@ app.get('/api/fetch', async (req, res) => {
 module.exports = app;
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log(`Server live on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server live on port ${PORT}`);
+  });
+}

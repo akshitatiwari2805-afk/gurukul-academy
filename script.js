@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Endpoints routes   
     const UPLOAD_URL = 'https://gurukul-academy-theta.vercel.app/api/upload';
-    const FETCH_URL = 'https://gurukul-academy-theta.vercel.app/api/fetch';
+    const FETCH_URL = 'https://gurukul-academy-theta.vercel.app/api/fetch'; 
 
     // === SEQUENTIAL STEP 1: AUTO DISMISS SPLASH LOADER ===
     function stopSplashScreen() {
@@ -72,18 +72,19 @@ document.addEventListener('DOMContentLoaded', () => {
         documentRenderTarget.innerHTML = '<p style="color: #cbd5e1; font-weight: 500;">Syncing workspace stream pipeline with MongoDB Cloud...</p>';
         
         try {
-            const response = await fetch(FETCH_URL);
-            const result = await response.json(); // 👈 Response format updated
+            // 👉 FIXED: URL ke saath ab classLevel aur subject query params bhejein ge taaki alag-alag dikhein!
+            const filterUrl = `${FETCH_URL}?classLevel=${selectedClass}&subject=${selectedSubject}`;
+            
+            const response = await fetch(filterUrl);
+            const result = await response.json();
             
             documentRenderTarget.innerHTML = ''; // Wipe loading feedback text
             
-            // ⚠️ Backend returns { success: true, data: [...] }
             if (result.success && result.data && result.data.length > 0) {
                 result.data.forEach(file => {
                     const fileItem = document.createElement('div');
                     fileItem.className = 'resource-item';
                     
-                    // ⚠️ Properties mapped to database schema (url and title/name)
                     const downloadPath = file.url || '#';
                     const displayTitle = file.title || file.name || 'Untitled Document';
                     const uploadDate = file.createdAt ? new Date(file.createdAt).toLocaleDateString() : 'N/A';
@@ -115,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fileCustomTitle = `${selectedVertical}_Class-${selectedClass}_${selectedSubject}_${file.name}`;
         
         const formData = new FormData();
-        formData.append('file', file); // 👈 ⚠️ Fixed: Changed 'pdfFile' to 'file' to match backend upload.single('file')
+        formData.append('file', file); 
         formData.append('title', fileCustomTitle);
         formData.append('subject', selectedSubject);
         formData.append('classLevel', selectedClass);

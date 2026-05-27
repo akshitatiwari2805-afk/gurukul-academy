@@ -109,12 +109,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // === SEQUENTIAL STEP 4: TRIGGER REPOSITORY FILE TRANSMISSION UPLOAD ===
+    // === SEQUENTIAL STEP 4: TRIGGER REPOSITORY FILE TRANSMISSION UPLOAD ===
     async function executeLocalUploadSimulation(event) {
         const file = event.target.files[0];
         if (!file) return;
 
-        // Structured metadata title generator parameters string
-        const fileCustomTitle = `${selectedVertical}_Class-${selectedClass}_${selectedSubject}_${file.name}`;
+        // 🎯 FIX: Pehle check karenge ki bache ki file name ke peeche .pdf laga hai ya nahi
+        let rawFileName = file.name;
+        if (!rawFileName.toLowerCase().endsWith('.pdf')) {
+            rawFileName = rawFileName + '.pdf';
+        }
+
+        // Ab aapka metadata hamesha .pdf extension ke saath hi generate hoga!
+        const fileCustomTitle = `${selectedVertical}_Class-${selectedClass}_${selectedSubject}_${rawFileName}`;
         
         const formData = new FormData();
         formData.append('file', file); 
@@ -142,7 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('❌ Network pipe failure. Verify Express engine server state inside terminal logs.');
         }
     }
-    
     // Global window pipeline exposure
     window.executeLocalUploadSimulation = executeLocalUploadSimulation;
 });

@@ -17,7 +17,6 @@ async function connectToDatabase() {
     return;
   }
 
-  // Vercel ke environment variables ko read karega, agar nahi milenge toh fallback string chalegi
   const dbUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb+srv://akshitatiwari2805_db_user:akshita28@cluster0.jblqvkw.mongodb.net/gurukul?appName=Cluster0';
 
   console.log('=> Connecting to database...');
@@ -38,12 +37,12 @@ cloudinary.config({
   api_secret: 'GMREtveY64pWS7qXSs0oDt8X4Ns' 
 });
 
-// 2. Cloud Storage Configuration
+// 2. Cloud Storage Configuration (FIXED FOR PDF RAW ACCESS)
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'gurukul_notes', 
-    resource_type: 'auto',   
+    resource_type: 'raw',   // 🔥 FIXED: PDF ko image nahi banayega, loading error hamesha ke liye khatam!
     public_id: (req, file) => Date.now() + '-' + file.originalname.split('.')[0],
   },
 });
@@ -60,15 +59,14 @@ const fileSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-// Vercel serverless optimization for models
 const File = mongoose.models.File || mongoose.model('File', fileSchema);
 
-// 4. Routes with Database Connection Check
+// 4. Routes
 
 // Upload Route
 app.post('/api/upload', async (req, res, next) => {
   try {
-    await connectToDatabase(); // Pehle connection check karega
+    await connectToDatabase();
     next();
   } catch (err) {
     res.status(500).json({ success: false, message: "Database connection failed" });
@@ -81,8 +79,8 @@ app.post('/api/upload', async (req, res, next) => {
     
     const newFile = new File({
       title: req.body.title || req.file.originalname,
-      subject: req.body.subject,
-      classLevel: req.body.classLevel,
+      subject: req.body.subject,      
+      classLevel: req.body.classLevel,  
       name: req.file.originalname,
       url: req.file.path 
     });
@@ -95,18 +93,26 @@ app.post('/api/upload', async (req, res, next) => {
   }
 });
 
-// Fetch Route
+// Fetch Route (FIXED FOR STRICT SEPARATE FILTERS)
 app.get('/api/fetch', async (req, res) => {
   try {
-    await connectToDatabase(); // Pehle connection check karega
-    const files = await File.find().sort({ createdAt: -1 });
+    await connectToDatabase();
+    
+    // 🔥 FIXED: Frontend se aane wale parameters ko read karke strict filter karega
+    const { classLevel, subject } = req.query;
+    let filterQuery = {};
+
+    if (classLevel) filterQuery.classLevel = classLevel;
+    if (subject) filterQuery.subject = subject;
+
+    // Sirf wahi notes aayenge jo specific class/subject ke hain
+    const files = await File.find(filterQuery).sort({ createdAt: -1 });
     res.json({ success: true, data: files });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// For Vercel Serverless Export
 module.exports = app;
 
 const PORT = process.env.PORT || 10000;

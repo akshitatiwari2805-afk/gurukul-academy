@@ -9,8 +9,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ⚠️ MongoDB Connection ko pehle connect kar rahe hain taaki timeout na ho
-mongoose.connect('mongodb://akshitatiwari2805:akshi123@cluster0-shard-00-00.p4yx.mongodb.net:27017,cluster0-shard-00-01.p4yx.mongodb.net:27017,cluster0-shard-00-02.p4yx.mongodb.net:27017/gurukul?ssl=true&replicaSet=atlas-kv8m3f-shard-0&authSource=admin&retryWrites=true&w=majority')
+// ⚠️ FIXED: Sahi mongodb+srv connection string bina shard ke jhanjhat ke
+mongoose.connect('mongodb+srv://akshitatiwari2805:akshi123@cluster0.p4yx.mongodb.net/gurukul?retryWrites=true&w=majority')
   .then(() => console.log('MongoDB Connected & Cloudinary Linked Permanent!'))
   .catch((err) => console.error('MongoDB Connection Error:', err));
 
@@ -33,11 +33,11 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
-// 3. Database Schema (Frontend ke matching properties add kiye hain)
+// 3. Database Schema
 const fileSchema = new mongoose.Schema({
-  title: String,       // Added for frontend compatibility
-  subject: String,     // Added for frontend compatibility
-  classLevel: String,  // Added for frontend compatibility
+  title: String,       
+  subject: String,     
+  classLevel: String,  
   name: String,
   url: String,
   createdAt: { type: Date, default: Date.now }
@@ -52,13 +52,12 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
     
-    // Cloudinary ka permanent link aur frontend ka data save ho raha hai
     const newFile = new File({
       title: req.body.title || req.file.originalname,
       subject: req.body.subject,
       classLevel: req.body.classLevel,
       name: req.file.originalname,
-      url: req.file.path // Cloudinary automatically gives the secure URL here
+      url: req.file.path 
     });
     
     await newFile.save();
